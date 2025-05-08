@@ -15,7 +15,6 @@ const useMarketplace = () => {
   });
   const [listedNFTs, setListedNFTs] = useState([]);
 
-  // Kết nối MetaMask và Smart Contract
   useEffect(() => {
     const connectWallet = async () => {
       if (window.ethereum) {
@@ -33,7 +32,6 @@ const useMarketplace = () => {
     connectWallet();
   }, []);
 
-  // Tạo metadata JSON từ thông tin form
   const prepareMetadata = ({ name, description, image }) => {
     return JSON.stringify(
       {
@@ -46,7 +44,6 @@ const useMarketplace = () => {
     );
   };
 
-  // Gửi yêu cầu tạo NFT
   const createNFT = async () => {
     const { name, description, image, price } = form;
     if (!name || !description || !image || !price) {
@@ -82,7 +79,6 @@ const useMarketplace = () => {
     }
   };
 
-  // Lấy metadata (name, description, image) từ IPFS
   const getTokenMetadata = useCallback(async (tokenId) => {
     try {
       const uri = await contract.methods.tokenURI(tokenId).call();
@@ -91,20 +87,19 @@ const useMarketplace = () => {
       const metadata = await res.json();
 
       return {
-        name: metadata.name || "",
-        description: metadata.description || "",
+        name: metadata.name || "Không rõ",
+        description: metadata.description || "Không có mô tả",
         image: metadata.image?.replace("ipfs://", "https://ipfs.io/ipfs/") || ""
       };
     } catch {
       return {
-        name: "",
-        description: "",
+        name: "Không rõ",
+        description: "Không có mô tả",
         image: ""
       };
     }
   }, [contract]);
 
-  // Lấy danh sách NFT đang bán
   const fetchListings = useCallback(async () => {
     if (!contract) return;
     const temp = [];
@@ -134,7 +129,6 @@ const useMarketplace = () => {
     setListedNFTs(temp);
   }, [contract, getTokenMetadata]);
 
-  // Gửi yêu cầu mua NFT
   const buyNFT = async (tokenId, price) => {
     try {
       await contract.methods.buyNFT(tokenId).send({ from: account, value: price });
@@ -145,7 +139,6 @@ const useMarketplace = () => {
     }
   };
 
-  // Tự động load danh sách NFT sau khi contract sẵn sàng
   useEffect(() => {
     if (contract) fetchListings();
   }, [contract, fetchListings]);

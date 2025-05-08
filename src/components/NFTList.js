@@ -6,9 +6,9 @@ const NFTList = ({ listedNFTs, buyNFT }) => {
 
   const toggleDetail = (tokenId) => {
     if (selected === tokenId) {
-      setSelected(null); // Ẩn nếu click lại
+      setSelected(null);
     } else {
-      setSelected(tokenId); // Hiện chi tiết
+      setSelected(tokenId);
     }
   };
 
@@ -35,18 +35,15 @@ const NFTList = ({ listedNFTs, buyNFT }) => {
                 style={{ width: "100%", height: 200, objectFit: "cover" }}
               />
             )}
+            <p><b>🌸 Tên:</b> {item.name}</p>
 
-            {/* 🏷️ Tên sản phẩm (luôn hiển thị) */}
-            <p><b>📛 Tên:</b> {item.name || "Không rõ"}</p>
-
-            {/* ✅ Chỉ hiển thị khi được click */}
             {selected === item.tokenId && (
               <>
                 <p><b>💰 Giá:</b> {Web3.utils.fromWei(item.price, "ether")} ETH</p>
-                <p><b>📄 Mô tả:</b> {item.description || "Không có mô tả"}</p>
+                <p><b>📄 Mô tả:</b> {item.description}</p>
                 <p><b>👤 Người bán:</b> {item.seller?.slice(0, 6)}...</p>
                 <button onClick={(e) => {
-                  e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
+                  e.stopPropagation();
                   buyNFT(item.tokenId, item.price);
                 }}>
                   🛒 Mua NFT
