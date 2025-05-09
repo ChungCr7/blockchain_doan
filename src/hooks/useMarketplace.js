@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import Web3 from "web3";
 import ABI from "../contract/NFTMarketplaceABI.json";
+import { CONTRACT_ADDRESS } from "../constants/contract";
 
-const CONTRACT_ADDRESS = "0x8df9426e452bbd940227a9f6c10fbadf70955d89";
+
 
 const useMarketplace = () => {
   const [account, setAccount] = useState("");
@@ -11,7 +12,8 @@ const useMarketplace = () => {
     name: "",
     description: "",
     image: "",
-    price: ""
+    price: "",
+    type: "image" // default type
   });
   const [listedNFTs, setListedNFTs] = useState([]);
 
@@ -32,52 +34,58 @@ const useMarketplace = () => {
     connectWallet();
   }, []);
 
-  const prepareMetadata = ({ name, description, image }) => {
+  const prepareMetadata = ({ name, description, image, type }) => {
     return JSON.stringify(
       {
         name,
         description,
-        image: image.startsWith("ipfs://") ? image : `ipfs://${image}`
+        image: image.startsWith("ipfs://") ? image : `ipfs://${image}`,
+        type
       },
       null,
       2
     );
   };
 
-  const createNFT = async () => {
-    const { name, description, image, price } = form;
-    if (!name || !description || !image || !price) {
-      alert("❗ Vui lòng nhập đầy đủ thông tin.");
-      return;
-    }
+const createNFT = async () => {
+  const { name, description, image, price, type } = form;
+  if (!name || !description || !image || !price || !type) {
+    alert("❗ Vui lòng nhập đầy đủ thông tin.");
+    return;
+  }
 
-    const metadata = prepareMetadata({ name, description, image });
-    const blob = new Blob([metadata], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+  const metadata = prepareMetadata({ name, description, image, type });
+  const blob = new Blob([metadata], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "metadata.json";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "metadata.json";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 
-    const cid = prompt("📥 Dán CID của metadata.json sau khi upload lên IPFS Desktop:");
-    if (!cid) return;
+  let cid = prompt("📥 Dán CID của metadata.json sau khi upload lên IPFS Desktop:");
+  if (!cid) return;
 
-    const tokenURI = `ipfs://${cid}`;
-    const weiPrice = Web3.utils.toWei(price, "ether");
+  // ✅ Tự động thêm tiền tố nếu người dùng chỉ dán mã
+  if (!cid.startsWith("ipfs://")) {
+    cid = `ipfs://${cid}`;
+  }
 
-    try {
-      await contract.methods.createNFT(tokenURI, weiPrice).send({ from: account });
-      alert("✅ NFT đã được tạo thành công!");
-      setForm({ name: "", description: "", image: "", price: "" });
-      fetchListings();
-    } catch (err) {
-      console.error(err);
-      alert("❌ Giao dịch thất bại.");
-    }
-  };
+  const tokenURI = cid;
+  const weiPrice = Web3.utils.toWei(price, "ether");
+
+  try {
+    await contract.methods.createNFT(tokenURI, weiPrice).send({ from: account });
+    alert("✅ NFT đã được tạo thành công!");
+    setForm({ name: "", description: "", image: "", price: "", type: "image" });
+    fetchListings();
+  } catch (err) {
+    console.error(err);
+    alert("❌ Giao dịch thất bại.");
+  }
+};
 
   const getTokenMetadata = useCallback(async (tokenId) => {
     try {
@@ -89,13 +97,15 @@ const useMarketplace = () => {
       return {
         name: metadata.name || "Không rõ",
         description: metadata.description || "Không có mô tả",
-        image: metadata.image?.replace("ipfs://", "https://ipfs.io/ipfs/") || ""
+        image: metadata.image?.replace("ipfs://", "https://ipfs.io/ipfs/") || "",
+        type: metadata.type || "image"
       };
     } catch {
       return {
         name: "Không rõ",
         description: "Không có mô tả",
-        image: ""
+        image: "",
+        type: "image"
       };
     }
   }, [contract]);
@@ -118,7 +128,8 @@ const useMarketplace = () => {
             ...listing,
             name: metadata.name,
             description: metadata.description,
-            image: metadata.image
+            image: metadata.image,
+            type: metadata.type
           });
         }
       } catch {

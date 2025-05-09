@@ -9,8 +9,9 @@ const Navbar = () => {
       <ul className="flex gap-6 text-sm">
         <li><Link to="/" className="hover:text-yellow-300">Trang chủ</Link></li>
         <li><Link to="/create" className="hover:text-yellow-300">Tạo NFT</Link></li>
-        <li><Link to="/collection" className="hover:text-yellow-300">Bộ sưu tập</Link></li>
+         <li><Link to="/products" className="hover:text-yellow-300">Sản phẩm</Link></li> 
         <li><Link to="/market" className="hover:text-yellow-300">Thị trường</Link></li>
+        <li><Link to="/collection" className="hover:text-yellow-300">Bộ sưu tập</Link></li>
       </ul>
       <div className="flex gap-3">
         <button className="bg-transparent border border-yellow-400 text-yellow-400 px-4 py-1 rounded hover:bg-yellow-400 hover:text-black">Đăng nhập</button>
