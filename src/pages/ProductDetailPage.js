@@ -1,3 +1,4 @@
+// src/pages/ProductDetailPage.js
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Web3 from "web3";
@@ -5,6 +6,7 @@ import Web3 from "web3";
 const ProductDetailPage = ({ listedNFTs, buyNFT }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const product = listedNFTs.find(
     (item) => item.tokenId.toString() === id
   );
@@ -13,8 +15,11 @@ const ProductDetailPage = ({ listedNFTs, buyNFT }) => {
     return <p className="text-center text-gray-400">❌ Không tìm thấy sản phẩm.</p>;
   }
 
-  const isImage = (url) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.includes("Qm");
-  const isAudio = (url) => /\.(mp3|wav|ogg)$/i.test(url) || url.includes("audio");
+  const isImage = (url) =>
+    /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.includes("Qm");
+
+  const isAudio = (url) =>
+    /\.(mp3|wav|ogg)$/i.test(url) || url.includes("audio");
 
   return (
     <div className="max-w-2xl mx-auto bg-gray-800 p-6 rounded-xl text-white">
@@ -31,7 +36,13 @@ const ProductDetailPage = ({ listedNFTs, buyNFT }) => {
         <img
           src={product.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
           alt={product.name}
-          className="w-full h-64 object-cover rounded mb-4"
+          className="w-full h-64 object-cover rounded mb-4 cursor-pointer hover:opacity-90"
+          onClick={() =>
+            window.open(
+              product.image.replace("ipfs://", "https://ipfs.io/ipfs/"),
+              "_blank"
+            )
+          }
         />
       ) : isAudio(product.image) ? (
         <audio
