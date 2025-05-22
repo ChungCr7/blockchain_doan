@@ -1,51 +1,53 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import WalletInfo from "../components/WalletInfo";
-import NFTForm from "../components/NFTForm";
-import NFTList from "../components/NFTList";
-import ProductPage from "../pages/ProductPage"; // ✅ pages thay vì components
-import ProductDetailPage from "../pages/ProductDetailPage"; // ✅ đúng đường dẫn và tên
+import axios from "axios";
 
-const AppRoutes = ({ account, form, listedNFTs, setForm, createNFT, buyNFT }) => {
-  return (
-    <Routes>
-      {/* Trang chủ */}
-      <Route
-        path="/"
-        element={
-          <>
-            <WalletInfo account={account} />
-            <div className="my-6 border-t border-gray-700" />
-            <NFTList listedNFTs={listedNFTs} buyNFT={buyNFT} />
-          </>
-        }
-      />
+const API_KEY = "YOUR_PINATA_API_KEY";
+const API_SECRET = "YOUR_PINATA_SECRET";
 
-      {/* Tạo NFT */}
-      <Route
-        path="/create"
-        element={<NFTForm form={form} setForm={setForm} createNFT={createNFT} />}
-      />
+export const uploadFileToIPFS = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
 
-      {/* Bộ sưu tập */}
-      <Route
-        path="/collection"
-        element={<p className="text-center text-xl">🎨 Trang Bộ Sưu Tập (đang phát triển)</p>}
-      />
+  const metadata = JSON.stringify({
+    name: file.name,
+  });
+  formData.append("pinataMetadata", metadata);
 
-      {/* Danh sách sản phẩm */}
-      <Route
-        path="/products"
-        element={<ProductPage listedNFTs={listedNFTs} buyNFT={buyNFT} />}
-      />
+  try {
+    const res = await axios.post(
+      "https://api.pinata.cloud/pinning/pinFileToIPFS",
+      formData,
+      {
+        maxBodyLength: "Infinity",
+        headers: {
+          "Content-Type": `multipart/form-data`,
+          pinata_api_key: API_KEY,
+          pinata_secret_api_key: API_SECRET,
+        },
+      }
+    );
 
-      {/* Chi tiết sản phẩm */}
-      <Route
-        path="/products/:id"
-        element={<ProductDetailPage listedNFTs={listedNFTs} buyNFT={buyNFT} />}
-      />
-    </Routes>
-  );
+    return `ipfs://${res.data.IpfsHash}`;
+  } catch (error) {
+    console.error("Upload file thất bại:", error);
+    throw error;
+  }
 };
 
-export default AppRoutes;
+export const uploadJSONToIPFS = async (json) => {
+  try {
+    const res = await axios.post(
+      "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+      json,
+      {
+        headers: {
+          pinata_api_key: API_KEY,
+          pinata_secret_api_key: API_SECRET,
+        },
+      }
+    );
+    return `ipfs://${res.data.IpfsHash}`;
+  } catch (error) {
+    console.error("Upload JSON thất bại:", error);
+    throw error;
+  }
+};

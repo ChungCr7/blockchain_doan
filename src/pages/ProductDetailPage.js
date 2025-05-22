@@ -11,17 +11,26 @@ const ProductDetailPage = ({ listedNFTs, buyNFT }) => {
   );
 
   if (!product) {
-    return <p className="text-center text-gray-400">❌ Không tìm thấy sản phẩm.</p>;
+    return (
+      <div className="text-center text-white mt-10">
+        ❌ Không tìm thấy sản phẩm.
+      </div>
+    );
   }
 
+  // Kiểm tra định dạng tệp để render đúng
   const isImage = (url) =>
-    /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.includes("Qm");
+    /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || product.type === "image";
 
   const isAudio = (url) =>
-    /\.(mp3|wav|ogg)$/i.test(url) || url.includes("audio");
+    /\.(mp3|wav|ogg)$/i.test(url) || product.type === "audio";
+
+  // Chuyển IPFS URI sang HTTP gateway
+  const getIpfsUrl = (ipfsUrl) =>
+    ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   return (
-    <div className="max-w-2xl mx-auto bg-gray-800 p-6 rounded-xl text-white">
+    <div className="max-w-2xl mx-auto bg-gray-800 p-6 mt-8 rounded-xl text-white shadow-lg">
       <button
         onClick={() => navigate(-1)}
         className="mb-4 text-sm text-yellow-300 hover:underline"
@@ -31,23 +40,19 @@ const ProductDetailPage = ({ listedNFTs, buyNFT }) => {
 
       <h2 className="text-2xl font-bold mb-4">📦 Chi tiết sản phẩm</h2>
 
+      {/* Render media */}
       {isImage(product.image) ? (
         <img
-          src={product.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
+          src={getIpfsUrl(product.image)}
           alt={product.name}
           className="w-full h-64 object-cover rounded mb-4 cursor-pointer hover:opacity-90"
-          onClick={() =>
-            window.open(
-              product.image.replace("ipfs://", "https://ipfs.io/ipfs/"),
-              "_blank"
-            )
-          }
+          onClick={() => window.open(getIpfsUrl(product.image), "_blank")}
         />
       ) : isAudio(product.image) ? (
         <audio
           controls
           className="w-full mb-4"
-          src={product.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
+          src={getIpfsUrl(product.image)}
         >
           Trình duyệt không hỗ trợ audio
         </audio>
@@ -57,14 +62,35 @@ const ProductDetailPage = ({ listedNFTs, buyNFT }) => {
         </div>
       )}
 
-      <p><b>🌸 Tên:</b> {product.name}</p>
-      <p><b>📄 Mô tả:</b> {product.description}</p>
-      <p><b>💰 Giá:</b> {Web3.utils.fromWei(product.price, "ether")} ETH</p>
-      <p><b>👤 Người bán:</b> {product.seller}</p>
+      {/* Thông tin sản phẩm */}
+      <div className="space-y-2">
+        <p>
+          <b>🌸 Tên:</b> {product.name}
+        </p>
+        <p>
+          <b>📄 Mô tả:</b> {product.description}
+        </p>
+        <p>
+          <b>💰 Giá:</b> {Web3.utils.fromWei(product.price, "ether")} ETH
+        </p>
+        <p>
+          <b>👤 Người bán:</b>{" "}
+          <span className="break-all">{product.seller}</span>
+        </p>
+        <p>
+          <b>🔖 Loại:</b>{" "}
+          {product.type === "image"
+            ? "🖼️ Tranh kỹ thuật số"
+            : product.type === "audio"
+            ? "🎵 Âm nhạc"
+            : "📜 Chứng chỉ số"}
+        </p>
+      </div>
 
+      {/* Nút mua */}
       <button
         onClick={() => buyNFT(product.tokenId, product.price)}
-        className="mt-4 bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500"
+        className="mt-6 w-full bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 font-semibold"
       >
         🛒 Mua NFT
       </button>

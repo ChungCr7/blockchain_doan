@@ -2,8 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import Web3 from "web3";
 import ABI from "../contract/NFTMarketplaceABI.json";
 import { CONTRACT_ADDRESS } from "../constants/contract";
-
-
+import { uploadFileToIPFS, uploadJSONToIPFS } from "../utils/pinata";
 
 const useMarketplace = () => {
   const [account, setAccount] = useState("");
@@ -11,12 +10,13 @@ const useMarketplace = () => {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    image: "",
+    imageFile: null,
     price: "",
-    type: "image" // default type
+    type: "image",
   });
   const [listedNFTs, setListedNFTs] = useState([]);
 
+  // Kết nối ví và khởi tạo contract
   useEffect(() => {
     const connectWallet = async () => {
       if (window.ethereum) {
@@ -34,82 +34,78 @@ const useMarketplace = () => {
     connectWallet();
   }, []);
 
-  const prepareMetadata = ({ name, description, image, type }) => {
-    return JSON.stringify(
-      {
-        name,
-        description,
-        image: image.startsWith("ipfs://") ? image : `ipfs://${image}`,
-        type
-      },
-      null,
-      2
-    );
+  // Tạo NFT
+  const createNFT = async () => {
+    const { name, description, price, type, imageFile } = form;
+
+    if (!name || !description || !price || !type || !imageFile) {
+      alert("❗ Vui lòng nhập đầy đủ thông tin và chọn file.");
+      return;
+    }
+
+    try {
+      // 1. Upload file lên IPFS
+      const mediaURI = await uploadFileToIPFS(imageFile);
+
+      // 2. Tạo metadata
+      const metadata = { name, description, mediaURI, type };
+
+      // 3. Upload metadata lên IPFS
+      const tokenURI = await uploadJSONToIPFS(metadata);
+
+      // 4. Gọi smart contract
+      const web3 = new Web3(window.ethereum);
+      const weiPrice = web3.utils.toWei(price, "ether");
+
+      await contract.methods
+        .createNFT(tokenURI, name, description, mediaURI, weiPrice)
+        .send({ from: account });
+
+      alert("✅ NFT đã được tạo thành công!");
+
+      setForm({
+        name: "",
+        description: "",
+        imageFile: null,
+        price: "",
+        type: "image",
+      });
+
+      fetchListings();
+    } catch (err) {
+      console.error("❌ Tạo NFT thất bại:", err);
+      alert("❌ Giao dịch thất bại.");
+    }
   };
 
-const createNFT = async () => {
-  const { name, description, image, price, type } = form;
-  if (!name || !description || !image || !price || !type) {
-    alert("❗ Vui lòng nhập đầy đủ thông tin.");
-    return;
-  }
+  // Lấy metadata từ IPFS
+  const getTokenMetadata = useCallback(
+    async (tokenId) => {
+      try {
+        const uri = await contract.methods.tokenURI(tokenId).call();
+        const metadataUrl = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+        const res = await fetch(metadataUrl);
+        const metadata = await res.json();
 
-  const metadata = prepareMetadata({ name, description, image, type });
-  const blob = new Blob([metadata], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+        return {
+          name: metadata.name || "Không rõ",
+          description: metadata.description || "Không có mô tả",
+          image: metadata.mediaURI?.replace("ipfs://", "https://ipfs.io/ipfs/") || "",
+          type: metadata.type || "image",
+        };
+      } catch {
+        return {
+          name: "Không rõ",
+          description: "Không có mô tả",
+          image: "",
+          type: "image",
+        };
+      }
+    },
+    [contract]
+  );
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "metadata.json";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  let cid = prompt("📥 Dán CID của metadata.json sau khi upload lên IPFS Desktop:");
-  if (!cid) return;
-
-  // ✅ Tự động thêm tiền tố nếu người dùng chỉ dán mã
-  if (!cid.startsWith("ipfs://")) {
-    cid = `ipfs://${cid}`;
-  }
-
-  const tokenURI = cid;
-  const weiPrice = Web3.utils.toWei(price, "ether");
-
-  try {
-    await contract.methods.createNFT(tokenURI, weiPrice).send({ from: account });
-    alert("✅ NFT đã được tạo thành công!");
-    setForm({ name: "", description: "", image: "", price: "", type: "image" });
-    fetchListings();
-  } catch (err) {
-    console.error(err);
-    alert("❌ Giao dịch thất bại.");
-  }
-};
-
-  const getTokenMetadata = useCallback(async (tokenId) => {
-    try {
-      const uri = await contract.methods.tokenURI(tokenId).call();
-      const metadataUrl = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
-      const res = await fetch(metadataUrl);
-      const metadata = await res.json();
-
-      return {
-        name: metadata.name || "Không rõ",
-        description: metadata.description || "Không có mô tả",
-        image: metadata.image?.replace("ipfs://", "https://ipfs.io/ipfs/") || "",
-        type: metadata.type || "image"
-      };
-    } catch {
-      return {
-        name: "Không rõ",
-        description: "Không có mô tả",
-        image: "",
-        type: "image"
-      };
-    }
-  }, [contract]);
-
+  // Lấy danh sách NFT
   const fetchListings = useCallback(async () => {
     if (!contract) return;
     const temp = [];
@@ -129,7 +125,7 @@ const createNFT = async () => {
             name: metadata.name,
             description: metadata.description,
             image: metadata.image,
-            type: metadata.type
+            type: metadata.type,
           });
         }
       } catch {
@@ -140,12 +136,14 @@ const createNFT = async () => {
     setListedNFTs(temp);
   }, [contract, getTokenMetadata]);
 
+  // Mua NFT
   const buyNFT = async (tokenId, price) => {
     try {
       await contract.methods.buyNFT(tokenId).send({ from: account, value: price });
       alert("🎉 Mua NFT thành công!");
       fetchListings();
-    } catch {
+    } catch (err) {
+      console.error("❌ Mua thất bại:", err);
       alert("❌ Giao dịch thất bại.");
     }
   };
@@ -154,13 +152,15 @@ const createNFT = async () => {
     if (contract) fetchListings();
   }, [contract, fetchListings]);
 
+  // ✅ Trả về contract để truyền vào <CreateProduct />
   return {
     account,
+    contract,
     form,
     listedNFTs,
     setForm,
     createNFT,
-    buyNFT
+    buyNFT,
   };
 };
 
