@@ -1,4 +1,3 @@
-// src/pages/ProductDetailPage.js
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Web3 from "web3";

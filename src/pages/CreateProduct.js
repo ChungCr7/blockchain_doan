@@ -1,13 +1,13 @@
 import React from "react";
 
-const NFTForm = ({ form, setForm, createNFT }) => {
+const CreateProduct = ({ form, setForm, createNFT }) => {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   return (
     <div className="space-y-4 bg-gray-800 p-6 rounded-xl text-white">
-      <h2 className="text-xl font-bold">🎨 Tạo NFT mới</h2>
+      <h2 className="text-xl font-bold">🎨 Thêm Sản Phẩm NFT</h2>
 
       <div>
         <label className="block text-sm">Tên NFT</label>
@@ -75,10 +75,10 @@ const NFTForm = ({ form, setForm, createNFT }) => {
         onClick={createNFT}
         className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500"
       >
-        🚀 Tạo NFT
+        🚀 Thêm sản phẩm
       </button>
     </div>
   );
 };
 
-export default NFTForm;
+export default CreateProduct;
