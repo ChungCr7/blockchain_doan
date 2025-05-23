@@ -10,6 +10,8 @@ app.use(express.json());
 // Routes
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
+const protectedRoutes = require("./routes/protectedRoutes");
+app.use("/api", protectedRoutes);
 
 // Kết nối MongoDB
 connectDB(); // ✅ gọi hàm kết nối
