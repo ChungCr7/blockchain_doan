@@ -24,15 +24,25 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("📥 Login request received"); // Không log email và mật khẩu
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Sai tài khoản hoặc mật khẩu" });
+    if (!user) {
+      console.log("❌ User không tồn tại");
+      return res.status(400).json({ message: "Sai tài khoản hoặc mật khẩu" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Sai tài khoản hoặc mật khẩu" });
+    if (!isMatch) {
+      console.log("❌ Sai mật khẩu");
+      return res.status(400).json({ message: "Sai tài khoản hoặc mật khẩu" });
+    }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
     res.json({ message: "Đăng nhập thành công", token });
   } catch (err) {
+    console.error("❌ Lỗi đăng nhập:", err);
     res.status(500).json({ message: "Lỗi đăng nhập", error: err.message });
   }
 };
+

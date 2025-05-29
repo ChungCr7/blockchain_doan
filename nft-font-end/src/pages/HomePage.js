@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
+import { WalletContext } from "../context/WalletContext";
 import { Link } from "react-router-dom";
 
 const HomePage = () => {
+  const { account, connectWallet } = useContext(WalletContext);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white px-6 py-10">
       <div className="max-w-4xl mx-auto text-center">
@@ -11,6 +14,17 @@ const HomePage = () => {
         <p className="text-lg text-gray-300 mb-6">
           Nền tảng tạo, mua và bán NFT với trải nghiệm dễ dàng, bảo mật và minh bạch.
         </p>
+
+        {account ? (
+          <p className="text-green-400 mb-4">✅ Đã kết nối ví: {account}</p>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="bg-yellow-400 text-black px-6 py-2 rounded-lg font-semibold hover:bg-yellow-500 mb-4"
+          >
+            🔗 Kết nối ví MetaMask
+          </button>
+        )}
 
         <div className="flex justify-center gap-6 mt-8">
           <Link
@@ -25,12 +39,6 @@ const HomePage = () => {
           >
             🔍 Khám phá thị trường
           </Link>
-        </div>
-
-        <div className="mt-12 text-sm text-gray-500">
-          <p>
-            Kết nối ví MetaMask để bắt đầu trải nghiệm toàn diện với sàn giao dịch NFT của bạn.
-          </p>
         </div>
       </div>
     </div>

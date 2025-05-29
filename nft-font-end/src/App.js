@@ -10,7 +10,11 @@ import MarketPage from "./pages/MarketPage";
 import ProductPage from "./pages/ProductPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CreateProduct from "./pages/CreateProduct";
-import TransactionHistoryPage from "./pages/TransactionHistoryPage"; // ✅ Thêm trang lịch sử
+import TransactionHistoryPage from "./pages/TransactionHistoryPage";
+import LoginPage from "./pages/auth/LoginPage";
+import ListNFTPage from "./pages/ListNFTPage";
+import CollectionPage from "./pages/CollectionPage";
+
 
 function App() {
   const {
@@ -21,6 +25,7 @@ function App() {
     createNFT,
     listedNFTs,
     buyNFT,
+    listNFT,
   } = useMarketplace();
 
   return (
@@ -35,7 +40,11 @@ function App() {
             <Route
               path="/products"
               element={
-                <ProductPage listedNFTs={listedNFTs} buyNFT={buyNFT} />
+                <ProductPage
+                  listedNFTs={listedNFTs}
+                  buyNFT={buyNFT}
+                  account={account} // ✅ ĐÃ FIX
+                />
               }
             />
 
@@ -54,34 +63,38 @@ function App() {
                   setForm={setForm}
                   createNFT={createNFT}
                   contract={contract}
-                />
-              }
-            />
-
-            <Route
-              path="/history"
-              element={
-                <TransactionHistoryPage
-                  listedNFTs={listedNFTs}
                   account={account}
-                  contract={contract}
                 />
               }
             />
 
-            <Route
-              path="/market"
-              element={<MarketPage />}
-            />
+            <Route path="/market" element={<MarketPage />} />
 
             <Route
               path="/collection"
               element={
-                <p className="text-center text-xl">
-                  🎨 Trang Bộ Sưu Tập (đang phát triển)
-                </p>
+                <CollectionPage
+                  account={account}
+                  contract={contract}
+                  listNFT={listNFT}
+                />
               }
             />
+
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route
+              path="/list"
+              element={
+                <ListNFTPage
+                  contract={contract}
+                  account={account}
+                  listNFT={listNFT}
+                />
+              }
+            />
+<Route path="/history" element={<TransactionHistoryPage account={account} contract={contract} listNFT={listNFT} />} />
+
           </Routes>
         </main>
 

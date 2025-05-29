@@ -1,2 +1,6 @@
-export const ipfsToHttp = (url) =>
-  url?.startsWith("ipfs://") ? url.replace("ipfs://", "https://ipfs.io/ipfs/") : url;
+export const ipfsToHttp = (uri) => {
+  if (!uri) return "";
+  return uri.startsWith("ipfs://")
+    ? uri.replace("ipfs://", "https://ipfs.io/ipfs/")
+    : uri;
+};
