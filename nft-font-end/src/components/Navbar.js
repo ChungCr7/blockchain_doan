@@ -21,7 +21,7 @@ const Navbar = () => {
         <li><Link to="/products" className="hover:text-yellow-300">Sản phẩm</Link></li> 
         <li><Link to="/market" className="hover:text-yellow-300">Thị trường</Link></li>
         <li><Link to="/collection" className="hover:text-yellow-300">Bộ sưu tập</Link></li>
-        <li><Link to="/history" className="hover:text-yellow-300">📜 Lịch sử giao dịch</Link></li>
+        {/* <li><Link to="/history" className="hover:text-yellow-300">📜 Lịch sử giao dịch</Link></li> */}
       </ul>
 
       <div className="flex items-center gap-3">
