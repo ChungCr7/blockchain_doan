@@ -1,16 +1,7 @@
-import React, { useContext } from "react";
-import { WalletContext } from "../context/WalletContext";
+import React from "react";
 import { Link } from "react-router-dom";
 
-// Hàm rút gọn địa chỉ ví
-const shortenAddress = (addr) => {
-  if (!addr) return "";
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-};
-
 const HomePage = () => {
-  const { account, connectWallet } = useContext(WalletContext);
-
   return (
     <div className="min-h-screen bg-gray-900 text-white px-6 py-10">
       <div className="max-w-4xl mx-auto text-center">
@@ -20,22 +11,6 @@ const HomePage = () => {
         <p className="text-lg text-gray-300 mb-6">
           Nền tảng tạo, mua và bán NFT với trải nghiệm dễ dàng, bảo mật và minh bạch.
         </p>
-
-        {/* {account ? (
-          <p className="text-green-400 mb-4">
-            ✅ Đã kết nối ví:&nbsp;
-            <span className="bg-gray-800 px-3 py-1 rounded text-yellow-300 font-mono">
-              {shortenAddress(account)}
-            </span>
-          </p>
-        ) : (
-          <button
-            onClick={connectWallet}
-            className="bg-yellow-400 text-black px-6 py-2 rounded-lg font-semibold hover:bg-yellow-500 mb-4"
-          >
-            🔗 Kết nối ví MetaMask
-          </button>
-        )} */}
 
         <div className="flex justify-center gap-6 mt-8">
           <Link

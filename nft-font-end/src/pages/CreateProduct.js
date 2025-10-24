@@ -31,45 +31,50 @@ const CreateProduct = ({ form, setForm, contract, account, fetchListings }) => {
 
   const createNFT = async () => {
     if (!contract || !account) {
-      alert("⚠️ Vui lòng kết nối ví trước khi tạo NFT.");
+      alert("⚠️ Vui lòng kết nối ví MetaMask trước khi tạo NFT.");
       return;
     }
 
     const { name, description, mediaFile, mediaType, price } = form;
 
     if (!name || !description || !mediaFile || !mediaType) {
-      alert("❗ Vui lòng nhập đầy đủ thông tin và chọn file.");
+      alert("❗ Vui lòng nhập đầy đủ thông tin và chọn file media.");
       return;
     }
 
     try {
       setLoading(true);
 
-      // 1. Upload file media lên IPFS
+      // 1️⃣ Upload file media lên IPFS (Pinata)
       const mediaURI = await uploadFileToIPFS(mediaFile);
+      console.log("✅ File IPFS URI:", mediaURI);
 
-      // 2. Tạo metadata và upload lên IPFS
+      // 2️⃣ Upload metadata JSON lên IPFS
       const metadata = { name, description, mediaURI, type: mediaType };
       const tokenURI = await uploadJSONToIPFS(metadata);
+      console.log("✅ Metadata URI:", tokenURI);
 
-      // 3. Tạo NFT trên blockchain
+      // 3️⃣ Chuyển giá ETH sang Wei (mặc định 0.001 nếu trống)
+      const web3 = new Web3(window.ethereum);
+      const weiPrice = web3.utils.toWei(
+        price && price !== "" ? price.toString() : "0.001",
+        "ether"
+      );
+
+      // 4️⃣ Gọi smart contract tạo NFT
       const tx = await contract.methods
-        .createNFT(tokenURI, name, description, mediaURI)
+        .createNFT(tokenURI, name, description, mediaURI, weiPrice)
         .send({ from: account });
 
+      console.log("📦 Transaction:", tx);
+
       const tokenId = tx.events?.NFTCreated?.returnValues?.tokenId;
-      alert("✅ NFT đã được tạo thành công!");
+      alert(`✅ NFT #${tokenId} đã được tạo thành công!`);
 
-      // 4. Nếu có giá, tự động niêm yết
-      if (price && parseFloat(price) > 0 && tokenId) {
-        const web3 = new Web3(window.ethereum);
-        const weiPrice = web3.utils.toWei(price.toString(), "ether");
+      // 5️⃣ (Tuỳ chọn) Nếu có giá, đã auto-list trong contract rồi nên không cần listNFT nữa
+      // Nhưng nếu bạn muốn list lại thủ công, có thể gọi listNFT ở đây.
 
-        await contract.methods.listNFT(tokenId, weiPrice).send({ from: account });
-        alert("📦 NFT đã được niêm yết thành công!");
-      }
-
-      // 5. Reset form
+      // 6️⃣ Reset form sau khi tạo thành công
       setForm({
         name: "",
         description: "",
@@ -78,68 +83,89 @@ const CreateProduct = ({ form, setForm, contract, account, fetchListings }) => {
         price: "",
       });
 
+      // 7️⃣ Cập nhật danh sách NFT hiển thị ngoài UI
       if (fetchListings) fetchListings();
     } catch (err) {
-      console.error("❌ Lỗi tạo NFT:", err);
-      alert("❌ Giao dịch thất bại!");
+      console.error("❌ Lỗi khi tạo NFT:", err);
+      alert("❌ Giao dịch thất bại! Vui lòng kiểm tra lại MetaMask hoặc số dư ví.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4 bg-gray-800 p-6 rounded-xl text-white max-w-xl mx-auto">
-      <h2 className="text-xl font-bold">🎨 Thêm Sản Phẩm NFT</h2>
+    <div className="space-y-4 bg-gray-800 p-6 rounded-xl text-white max-w-xl mx-auto shadow-lg">
+      <h2 className="text-xl font-bold">🎨 Tạo NFT Mới</h2>
 
+      {/* --- Tên NFT --- */}
       <div>
-        <label className="block text-sm">Tên NFT</label>
+        <label className="block text-sm font-medium">Tên NFT</label>
         <input
           name="name"
           value={form.name}
           onChange={handleChange}
-          className="w-full px-3 py-2 bg-gray-900 rounded mt-1"
+          className="w-full px-3 py-2 bg-gray-900 rounded mt-1 text-white"
           placeholder="VD: Em của ngày hôm nay"
         />
       </div>
 
+      {/* --- Mô tả NFT --- */}
       <div>
-        <label className="block text-sm">Mô tả</label>
+        <label className="block text-sm font-medium">Mô tả</label>
         <textarea
           name="description"
           value={form.description}
           onChange={handleChange}
-          className="w-full px-3 py-2 bg-gray-900 rounded mt-1"
-          placeholder="Mô tả ngắn về sản phẩm"
+          className="w-full px-3 py-2 bg-gray-900 rounded mt-1 text-white"
+          placeholder="Mô tả ngắn về sản phẩm NFT"
         />
       </div>
 
+      {/* --- File NFT (ảnh, nhạc, video) --- */}
       <div>
-        <label className="block text-sm">Chọn file (ảnh / nhạc / video)</label>
+        <label className="block text-sm font-medium">
+          Chọn file (ảnh / nhạc / video)
+        </label>
         <input
           type="file"
           accept="image/*,audio/*,video/*"
           onChange={handleFileChange}
           className="w-full px-3 py-2 bg-gray-900 rounded mt-1 text-white"
         />
+        {form.mediaFile && (
+          <p className="text-green-400 text-sm mt-1">
+            📁 Đã chọn: {form.mediaFile.name}
+          </p>
+        )}
       </div>
 
+      {/* --- Giá NFT --- */}
       <div>
-        <label className="block text-sm">Giá bán (ETH) <span className="text-gray-400">(tuỳ chọn, để tự động niêm yết)</span></label>
+        <label className="block text-sm font-medium">
+          Giá bán (ETH){" "}
+          <span className="text-gray-400">
+            (bắt buộc, NFT sẽ được niêm yết tự động)
+          </span>
+        </label>
         <input
           name="price"
           value={form.price}
           onChange={handleChange}
-          className="w-full px-3 py-2 bg-gray-900 rounded mt-1"
+          className="w-full px-3 py-2 bg-gray-900 rounded mt-1 text-white"
           placeholder="0.01"
+          type="number"
+          step="0.001"
+          min="0.001"
         />
       </div>
 
+      {/* --- Nút tạo NFT --- */}
       <button
         onClick={createNFT}
-        className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 disabled:opacity-50"
+        className="w-full bg-yellow-400 text-black px-4 py-2 rounded font-semibold hover:bg-yellow-500 transition disabled:opacity-50"
         disabled={loading}
       >
-        {loading ? "⏳ Đang xử lý..." : "🚀 Thêm sản phẩm"}
+        {loading ? "⏳ Đang xử lý..." : "🚀 Tạo NFT ngay"}
       </button>
     </div>
   );

@@ -10,11 +10,10 @@ import MarketPage from "./pages/MarketPage";
 import ProductPage from "./pages/ProductPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CreateProduct from "./pages/CreateProduct";
-import TransactionHistoryPage from "./pages/TransactionHistoryPage";
+import TransactionHistoryPage from "./pages/TransactionHistoryPage"; // ✅ thêm trang lịch sử
 import LoginPage from "./pages/auth/LoginPage";
 import ListNFTPage from "./pages/ListNFTPage";
 import CollectionPage from "./pages/CollectionPage";
-
 
 function App() {
   const {
@@ -35,26 +34,33 @@ function App() {
 
         <main className="pt-24 px-6 max-w-7xl mx-auto flex-grow">
           <Routes>
+            {/* Trang chủ */}
             <Route path="/" element={<HomePage />} />
 
+            {/* Danh sách NFT (sản phẩm) */}
             <Route
               path="/products"
               element={
                 <ProductPage
                   listedNFTs={listedNFTs}
                   buyNFT={buyNFT}
-                  account={account} // ✅ ĐÃ FIX
+                  account={account}
                 />
               }
             />
 
+            {/* Chi tiết NFT */}
             <Route
               path="/products/:id"
               element={
-                <ProductDetailPage listedNFTs={listedNFTs} buyNFT={buyNFT} />
+                <ProductDetailPage
+                  listedNFTs={listedNFTs}
+                  buyNFT={buyNFT}
+                />
               }
             />
 
+            {/* Tạo NFT */}
             <Route
               path="/create"
               element={
@@ -68,8 +74,10 @@ function App() {
               }
             />
 
+            {/* Thị trường NFT */}
             <Route path="/market" element={<MarketPage />} />
 
+            {/* Bộ sưu tập NFT của người dùng */}
             <Route
               path="/collection"
               element={
@@ -81,8 +89,10 @@ function App() {
               }
             />
 
+            {/* Đăng nhập */}
             <Route path="/login" element={<LoginPage />} />
 
+            {/* Đăng bán NFT */}
             <Route
               path="/list"
               element={
@@ -93,8 +103,17 @@ function App() {
                 />
               }
             />
-<Route path="/history" element={<TransactionHistoryPage account={account} contract={contract} listNFT={listNFT} />} />
 
+            {/* ✅ Lịch sử mua bán NFT */}
+            <Route
+              path="/history"
+              element={
+                <TransactionHistoryPage
+                  account={account}
+                  contract={contract}
+                />
+              }
+            />
           </Routes>
         </main>
 
