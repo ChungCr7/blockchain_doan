@@ -19,7 +19,7 @@ export const WalletProvider = ({ children }) => {
         console.error("❌ Kết nối ví thất bại:", error);
       }
     } else {
-      alert("⚠️ Vui lòng cài đặt MetaMask!");
+      alert("⚠️ Vui lòng cài đặt Trust Wallet hoặc ví hỗ trợ WalletConnect!");
     }
   };
 

@@ -1,0 +1,61 @@
+name: nft_app
+description: "A new Flutter NFT project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+  # Web3 + Crypto
+  web3dart: ^2.7.3
+  bip39: ^1.0.6
+  ed25519_hd_key: ^2.3.0
+  hex: ^0.2.0
+  eth_sig_util: ^0.0.9
+  crypto: ^3.0.5
+
+  # WalletConnect / Trust Wallet
+  reown_appkit: ^1.0.1       # walletconnect v2 (ổn định)
+  url_launcher: ^6.3.1
+
+  # Network
+  http: ^1.5.0
+
+  # ENV
+  dotenv: ^4.2.0
+  flutter_dotenv: ^6.0.0
+
+  # Storage
+  shared_preferences: ^2.3.3
+  flutter_secure_storage: ^9.2.2
+
+  # QR
+  qr_flutter: ^4.1.0
+
+  # Localization
+  intl: ^0.20.2
+
+  # Biometrics
+  local_auth: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

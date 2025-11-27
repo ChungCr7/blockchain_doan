@@ -31,7 +31,7 @@ const CreateProduct = ({ form, setForm, contract, account, fetchListings }) => {
 
   const createNFT = async () => {
     if (!contract || !account) {
-      alert("⚠️ Vui lòng kết nối ví MetaMask trước khi tạo NFT.");
+      alert("⚠️ Vui lòng kết nối ví Trust Wallet (hoặc ví hỗ trợ WalletConnect) trước khi tạo NFT.");
       return;
     }
 
@@ -87,7 +87,7 @@ const CreateProduct = ({ form, setForm, contract, account, fetchListings }) => {
       if (fetchListings) fetchListings();
     } catch (err) {
       console.error("❌ Lỗi khi tạo NFT:", err);
-      alert("❌ Giao dịch thất bại! Vui lòng kiểm tra lại MetaMask hoặc số dư ví.");
+      alert("❌ Giao dịch thất bại! Vui lòng kiểm tra lại Trust Wallet hoặc số dư ví.");
     } finally {
       setLoading(false);
     }

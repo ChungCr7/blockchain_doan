@@ -20,7 +20,7 @@ const useMarketplace = () => {
 
   useEffect(() => {
     const init = async () => {
-      if (!window.ethereum) return alert("⚠️ Cần cài MetaMask");
+      if (!window.ethereum) return alert("⚠️ Cần cài đặt ví hoặc kết nối ví (ví dụ Trust Wallet)");
       const web3 = new Web3(window.ethereum);
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const instance = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);

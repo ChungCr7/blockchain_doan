@@ -78,7 +78,7 @@ const Navbar = () => {
         </li>
       </ul>
 
-      {/* --- Ví MetaMask --- */}
+      {/* --- Ví Trust Wallet / WalletConnect --- */}
       <div className="flex items-center gap-3">
         {account ? (
           <span className="bg-yellow-400 text-black px-4 py-1 rounded font-mono text-sm">
