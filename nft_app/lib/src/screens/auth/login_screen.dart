@@ -50,18 +50,19 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // LOGO
+                /// LOGO APP
                 Image.asset(
                   "assets/logo.png",
                   height: 120,
-                  errorBuilder: (context, error, stack) => const Icon(
-                    Icons.image_not_supported,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.account_balance_wallet,
                     size: 120,
                     color: Colors.white24,
                   ),
                 ),
 
                 const SizedBox(height: 20),
+
                 const Text(
                   "NFT MARKETPLACE",
                   style: TextStyle(
@@ -73,56 +74,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 10),
                 const Text(
-                  "Kết nối ví của bạn để bắt đầu giao dịch\nNFT trên nền tảng của chúng tôi.",
+                  "Kết nối Trust Wallet để bắt đầu giao dịch NFT.",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
                 ),
 
                 const SizedBox(height: 40),
 
-                // BUTTON LOGIN METAMASK
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: loading ? null : loginWallet,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                "assets/metamask.png",
-                                height: 28,
-                                errorBuilder: (context, error, stack) =>
-                                    const Icon(
-                                      Icons.account_balance_wallet,
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                "Đăng nhập bằng MetaMask",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // BUTTON TRUST WALLET
+                /// 🔵 TRUST WALLET LOGIN BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -134,25 +93,30 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          "assets/trust.png",
-                          height: 28,
-                          errorBuilder: (context, error, stack) => const Icon(
-                            Icons.account_balance_wallet,
-                            color: Colors.white,
-                            size: 28,
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                "assets/trust.png",
+                                height: 28,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.account_balance_wallet,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                "Đăng nhập bằng Trust Wallet",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          "Đăng nhập bằng Trust Wallet",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ],

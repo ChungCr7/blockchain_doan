@@ -31,10 +31,12 @@ class WalletConnectService {
 
   Future<void> init() async {
     if (_appKit != null) return;
+
     final projectId = Environment.walletConnectProjectId;
     if (projectId.isEmpty) {
       throw StateError('Missing WALLETCONNECT_PROJECT_ID in .env');
     }
+
     _appKit = await ReownAppKit.createInstance(
       projectId: projectId,
       metadata: const PairingMetadata(
@@ -46,11 +48,13 @@ class WalletConnectService {
         ],
       ),
     );
+
     await _restoreActiveSession();
   }
 
   Future<void> _restoreActiveSession() async {
     if (_appKit == null) return;
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final isLoggedOut = prefs.getBool('walletconnect_logged_out') ?? false;
@@ -59,6 +63,7 @@ class WalletConnectService {
         return;
       }
     } catch (e) {}
+
     try {
       final activeSessions = _appKit!.getActiveSessions();
       if (activeSessions.isNotEmpty) {
@@ -129,6 +134,7 @@ class WalletConnectService {
     }
     _activeSession = null;
     _lastWalletConnectUri = null;
+
     if (clearStoredData) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('walletconnect_logged_out', true);
@@ -138,6 +144,7 @@ class WalletConnectService {
   Future<String> connectWithWallet({String? walletUniversalLink}) async {
     await init();
     final app = _appKit!;
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final awaiting =
@@ -146,11 +153,14 @@ class WalletConnectService {
         await prefs.remove('walletconnect_awaiting_approval');
       }
     } catch (e) {}
+
     if (_activeSession != null) {
       await disconnect();
     }
+
     final sepoliaChain = Environment.sepoliaChainEip155;
     final ethereumMainnet = Environment.ethereumMainnetEip155;
+
     final connectResponse = await app.connect(
       optionalNamespaces: {
         'eip155': RequiredNamespace(
@@ -172,6 +182,7 @@ class WalletConnectService {
     if (uri != null) {
       final wcUri = uri.toString();
       _lastWalletConnectUri = wcUri;
+
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('walletconnect_awaiting_approval', true);
@@ -187,6 +198,7 @@ class WalletConnectService {
       final rawWc = Uri.parse(wcUri);
 
       bool launched = false;
+
       if (walletUniversalLink != null) {
         final provided = Uri.parse(
           '$walletUniversalLink/wc?uri=${Uri.encodeComponent(wcUri)}',
@@ -200,6 +212,7 @@ class WalletConnectService {
           launched = false;
         }
       }
+
       if (!launched) {
         try {
           launched = await launchUrl(
@@ -210,6 +223,7 @@ class WalletConnectService {
           launched = false;
         }
       }
+
       if (!launched) {
         try {
           launched = await launchUrl(
@@ -220,6 +234,7 @@ class WalletConnectService {
           launched = false;
         }
       }
+
       if (!launched) {
         try {
           launched = await launchUrl(
@@ -297,10 +312,12 @@ class WalletConnectService {
     final app = _appKit;
     final session = _activeSession;
     if (app == null || session == null) return;
+
     final sepoliaChainId = Environment.chainId;
     final sepoliaChainIdHex = Environment.sepoliaChainIdHex;
     final currentAccounts = session.namespaces['eip155']?.accounts;
     if (currentAccounts == null || currentAccounts.isEmpty) return;
+
     String chainIdToUse;
     try {
       final sepoliaAccount = currentAccounts.firstWhere(
@@ -354,16 +371,19 @@ class WalletConnectService {
     if (app == null || session == null) {
       throw StateError('Wallet not connected');
     }
+
     final account = _firstAccountFromSession(session);
     final address = _extractAddressFromAccount(account);
+
     final signature = await app.request(
       topic: session.topic,
-      chainId: 'eip155:${Environment.chainId}',
+      chainId: 'eip155:11155111',
       request: SessionRequestParams(
         method: 'personal_sign',
         params: [message, address],
       ),
     );
+
     return signature as String;
   }
 
@@ -373,7 +393,7 @@ class WalletConnectService {
     String? value,
     String? gas,
     String? gasPrice,
-    bool autoDisconnect = false,
+    bool autoDisconnect = false, // hiện chưa dùng, giữ cho tương thích
     bool autoOpenWallet = true,
   }) async {
     final app = _appKit;
@@ -386,11 +406,13 @@ class WalletConnectService {
 
     final account = _firstAccountFromSession(session);
     final from = _extractAddressFromAccount(account);
+
     final transactionParams = <String, dynamic>{
       'from': from,
       'to': to,
       'data': data,
     };
+
     if (value != null && value.isNotEmpty) {
       if (!value.startsWith('0x')) {
         final bigIntValue = BigInt.parse(value);
@@ -399,6 +421,7 @@ class WalletConnectService {
         transactionParams['value'] = value;
       }
     }
+
     if (gas != null && gas.isNotEmpty) {
       if (!gas.startsWith('0x')) {
         final bigIntGas = BigInt.parse(gas);
@@ -407,6 +430,7 @@ class WalletConnectService {
         transactionParams['gas'] = gas;
       }
     }
+
     if (gasPrice != null && gasPrice.isNotEmpty) {
       if (!gasPrice.startsWith('0x')) {
         final bigIntGasPrice = BigInt.parse(gasPrice);
@@ -430,30 +454,39 @@ class WalletConnectService {
         method: 'eth_sendTransaction',
         params: [transactionParams],
       );
+
       final requestFuture = app.request(
         topic: session.topic,
-        chainId: 'eip155:${Environment.chainId}',
+        chainId: 'eip155:11155111',
         request: requestParams,
       );
+
       _isPendingTransaction = true;
+
       if (autoOpenWallet) {
         unawaited(_tryOpenWalletApp());
       }
+
       final result = await requestFuture.timeout(const Duration(minutes: 5));
+
       String txHash;
       if (result is String) {
         txHash = result;
-      } else if (result is Map)
+      } else if (result is Map) {
         txHash = result.values.first.toString();
-      else
+      } else {
         txHash = result.toString();
+      }
+
       txHash = txHash
           .replaceAll('"', '')
           .replaceAll("'", '')
           .replaceAll('[', '')
           .replaceAll(']', '')
           .trim();
+
       if (!txHash.startsWith('0x')) txHash = '0x$txHash';
+
       _isPendingTransaction = false;
       return txHash;
     } on TimeoutException {
@@ -510,36 +543,47 @@ class WalletConnectService {
         'Wallet not connected. Please connect your wallet first.',
       );
     }
+
     final account = _firstAccountFromSession(session);
     final address = _extractAddressFromAccount(account);
+
     final typedData = jsonDecode(typedDataJson) as Map<String, dynamic>;
     final formattedTypedData = _formatTypedDataForWalletConnect(typedData);
+
     final requestParams = SessionRequestParams(
       method: 'eth_signTypedData_v4',
       params: [address, jsonEncode(formattedTypedData)],
     );
+
     final requestFuture = app.request(
       topic: session.topic,
-      chainId: 'eip155:${Environment.chainId}',
+      chainId: 'eip155:11155111',
       request: requestParams,
     );
+
     _isPendingSignature = true;
     unawaited(_tryOpenWalletApp());
+
     final result = await requestFuture.timeout(const Duration(minutes: 5));
+
     String signature;
     if (result is String) {
       signature = result;
-    } else if (result is Map)
+    } else if (result is Map) {
       signature = result.values.first.toString();
-    else
+    } else {
       signature = result.toString();
+    }
+
     signature = signature
         .replaceAll('"', '')
         .replaceAll("'", '')
         .replaceAll('[', '')
         .replaceAll(']', '')
         .trim();
+
     if (!signature.startsWith('0x')) signature = '0x$signature';
+
     _isPendingSignature = false;
     return signature;
   }
@@ -553,6 +597,7 @@ class WalletConnectService {
   Future<bool> hasActiveSession() async {
     await init();
     if (_appKit == null) return false;
+
     try {
       final activeSessions = _appKit!.getActiveSessions();
       if (activeSessions.isNotEmpty) {
@@ -563,6 +608,7 @@ class WalletConnectService {
         return true;
       }
     } catch (e) {}
+
     final hasActive = _activeSession != null;
     return hasActive;
   }
@@ -589,6 +635,7 @@ class WalletConnectService {
         return sepoliaAccount;
       }
     }
+
     for (final namespaceKey in session.namespaces.keys) {
       final namespace = session.namespaces[namespaceKey];
       if (namespace != null) {
@@ -596,6 +643,7 @@ class WalletConnectService {
         if (accounts.isNotEmpty) return accounts.first;
       }
     }
+
     throw StateError('No accounts found in WalletConnect session.');
   }
 
@@ -622,30 +670,14 @@ class WalletConnectService {
 
   bool _isValidEthereumAddress(String address) {
     final cleanAddress = address.toLowerCase().replaceFirst('0x', '');
-    return RegExp(r'^[0-9a-f]{40} *').hasMatch(cleanAddress) ||
-        RegExp(r'^[0-9a-f]{40} *$').hasMatch(cleanAddress);
+    return RegExp(r'^[0-9a-f]{40}$').hasMatch(cleanAddress);
   }
 
+  /// Nếu muốn chỉnh sửa typedData cho wallet nào đó thì làm ở đây.
+  /// Còn không cần thì cứ trả lại nguyên bản.
   Map<String, dynamic> _formatTypedDataForWalletConnect(
     Map<String, dynamic> typedData,
   ) {
-    final formatted = jsonDecode(jsonEncode(typedData)) as Map<String, dynamic>;
-    final domain = formatted['domain'] as Map<String, dynamic>?;
-    if (domain != null && domain['chainId'] != null) {
-      if (domain['chainId'] is String) {
-        try {
-          domain['chainId'] = int.parse(domain['chainId'] as String);
-        } catch (e) {}
-      } else if (domain['chainId'] is BigInt) {
-        domain['chainId'] = (domain['chainId'] as BigInt).toInt();
-      }
-    }
-    if (domain != null && domain['verifyingContract'] != null) {
-      try {
-        final contractAddress = domain['verifyingContract'] as String;
-        domain['verifyingContract'] = contractAddress;
-      } catch (e) {}
-    }
-    return formatted;
+    return typedData;
   }
 }

@@ -32,6 +32,9 @@ dependencies:
   # Network
   http: ^1.5.0
 
+  # File picker for selecting media files
+  file_picker: ^10.3.7
+
   # ENV
   dotenv: ^4.2.0
   flutter_dotenv: ^6.0.0
@@ -58,4 +61,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/

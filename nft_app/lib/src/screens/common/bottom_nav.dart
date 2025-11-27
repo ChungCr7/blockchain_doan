@@ -6,7 +6,7 @@ import 'package:nft_app/src/screens/history/history_screen.dart';
 import 'package:nft_app/src/screens/home/home_screen.dart';
 
 class BottomNavPage extends StatefulWidget {
-  final String address;
+  final String address; // ví đang đăng nhập
 
   const BottomNavPage({super.key, required this.address});
 
@@ -22,12 +22,21 @@ class _BottomNavPageState extends State<BottomNavPage> {
   @override
   void initState() {
     super.initState();
+
     screens = [
-      HomePage(address: widget.address),
+      HomeScreen(address: widget.address),
+
+      /// Tạo NFT
       CreateNFTPage(address: widget.address),
-      SellNFTPage(),
-      ProductsPage(),
-      HistoryPage(),
+
+      /// Rao bán NFT (NFT mình sở hữu)
+      SellNFTPage(address: widget.address),
+
+      /// Sản phẩm toàn bộ marketplace
+      ProductsPage(currentAddress: widget.address),
+
+      /// Lịch sử – không cần address
+      const HistoryPage(),
     ];
   }
 
@@ -39,25 +48,33 @@ class _BottomNavPageState extends State<BottomNavPage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selected,
         onTap: (i) => setState(() => selected = i),
+
         backgroundColor: const Color(0xFF0D0E21),
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.white70,
         type: BottomNavigationBarType.fixed,
+
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Trang chủ"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Trang chủ",
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.rocket_launch),
             label: "Tạo NFT",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.build_rounded),
+            icon: Icon(Icons.sell),
             label: "Rao bán",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: "Sản phẩm",
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: "Lịch sử"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: "Lịch sử",
+          ),
         ],
       ),
     );

@@ -13,6 +13,9 @@ class Web3Service {
   Web3Client? _client;
   http.Client? _httpClient;
 
+  /// Địa chỉ ví hiện tại (đã connect trong phiên app)
+  String? _currentAddress;
+
   Future<void> init() async {
     await _wc.init();
     if (_client == null) {
@@ -21,18 +24,26 @@ class Web3Service {
     }
   }
 
-  /// Connects to wallet (Trust Wallet via WalletConnect) and returns the wallet address
+  /// Kết nối Trust Wallet & trả về địa chỉ ví
   Future<String> connect() async {
     await init();
     final address = await _wc.connectWithWallet();
+    _currentAddress = address; // 🔥 lưu lại để dùng cho History, v.v.
     return address;
+  }
+
+  /// Lấy địa chỉ ví đang dùng trong app (nếu chưa connect -> trả về chuỗi rỗng)
+  Future<String> getCurrentAddress() async {
+    await init();
+    return _currentAddress ?? '';
   }
 
   Future<void> disconnect({bool clearStoredData = false}) async {
     await _wc.disconnect(clearStoredData: clearStoredData);
+    _currentAddress = null;
   }
 
-  /// Read-only Web3 client for RPC calls (balances, contract calls, etc.)
+  /// Read-only Web3 client cho các RPC call (balance, contract, ...)
   Web3Client get client {
     if (_client == null) {
       _httpClient = http.Client();
@@ -41,14 +52,14 @@ class Web3Service {
     return _client!;
   }
 
-  /// Get ETH balance for an address
+  /// Lấy ETH balance của 1 address
   Future<EtherAmount> getBalance(String address) async {
     await init();
     final ethAddress = EthereumAddress.fromHex(address);
     return client.getBalance(ethAddress);
   }
 
-  /// Convenience wrapper to send transaction via WalletConnect (delegates to WalletConnectService)
+  /// Gửi transaction qua WalletConnect
   Future<String> sendTransaction({
     required String to,
     required String data,
