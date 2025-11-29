@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nft_app/src/screens/products/nft_detail_page.dart';
 import 'package:nft_app/src/services/contract_service.dart';
+import 'package:nft_app/src/services/ipfs_helper.dart';
 
 class ProductsPage extends StatefulWidget {
   final String currentAddress;
@@ -31,6 +32,16 @@ class _ProductsPageState extends State<ProductsPage> {
     try {
       final data = await ContractService().fetchAllNFTsForSale();
 
+      // 🔥 Smart Gateway xử lý IPFS cho toàn bộ danh sách
+      for (var item in data) {
+        final media = item["mediaURI"] ?? item["image"];
+
+        if (media != null) {
+          final resolved = await IpfsHelper.resolve(media);
+          item["mediaResolved"] = resolved;
+        }
+      }
+
       setState(() {
         _items = data;
         _loading = false;
@@ -45,8 +56,9 @@ class _ProductsPageState extends State<ProductsPage> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Lỗi tải NFT: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Lỗi tải NFT: $e")));
     }
   }
 
@@ -68,7 +80,7 @@ class _ProductsPageState extends State<ProductsPage> {
   }
 
   Widget _buildItem(Map<String, dynamic> nft) {
-    final media = nft["mediaURI"] ?? nft["image"];
+    final media = nft["mediaResolved"] ?? nft["mediaURI"] ?? nft["image"];
     final priceWei = nft["priceWei"] ?? nft["price"];
     final priceDisplay = _formatEth(priceWei);
 
@@ -119,43 +131,43 @@ class _ProductsPageState extends State<ProductsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text("Không tải được dữ liệu marketplace"),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _loadItems,
-                        child: const Text("Thử lại"),
-                      )
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Không tải được dữ liệu marketplace"),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: _loadItems,
+                    child: const Text("Thử lại"),
                   ),
-                )
-              : _items.isEmpty
-                  ? RefreshIndicator(
-                      onRefresh: _onRefresh,
-                      child: ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: const [
-                          SizedBox(height: 50),
-                          Center(
-                            child: Text(
-                              "Chưa có NFT nào đang được rao bán",
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _onRefresh,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _items.length,
-                        itemBuilder: (_, i) => _buildItem(_items[i]),
-                      ),
+                ],
+              ),
+            )
+          : _items.isEmpty
+          ? RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: const [
+                  SizedBox(height: 50),
+                  Center(
+                    child: Text(
+                      "Chưa có NFT nào đang được rao bán",
+                      style: TextStyle(fontSize: 16),
                     ),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _items.length,
+                itemBuilder: (_, i) => _buildItem(_items[i]),
+              ),
+            ),
     );
   }
 }

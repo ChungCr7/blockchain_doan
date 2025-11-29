@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nft_app/src/services/contract_service.dart';
+import 'package:nft_app/src/services/ipfs_helper.dart';
 
 class NFTDetailPage extends StatefulWidget {
   final Map<String, dynamic> nft;
@@ -17,10 +18,25 @@ class NFTDetailPage extends StatefulWidget {
 
 class _NFTDetailPageState extends State<NFTDetailPage> {
   bool _buying = false;
+  String? resolvedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveImage();
+  }
+
+  Future<void> _resolveImage() async {
+    final media = widget.nft["mediaURI"] ?? widget.nft["image"];
+    if (media == null) return;
+
+    final link = await IpfsHelper.resolve(media);
+    setState(() => resolvedImage = link);
+  }
 
   String _formatEth(BigInt? wei) {
     if (wei == null) return "0";
-    double eth = wei.toDouble() / 1e18;
+    final eth = wei.toDouble() / 1e18;
     return eth.toStringAsFixed(4);
   }
 
@@ -42,18 +58,17 @@ class _NFTDetailPageState extends State<NFTDetailPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Mua thành công – TX: $tx")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Mua thành công – TX: $tx")),
+      );
 
       Navigator.pop(context, true);
     } catch (e) {
       debugPrint("[NFTDetailPage] buyNFT error: $e");
       if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Lỗi mua NFT: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi mua NFT: $e")),
+      );
     } finally {
       if (mounted) setState(() => _buying = false);
     }
@@ -63,9 +78,10 @@ class _NFTDetailPageState extends State<NFTDetailPage> {
   Widget build(BuildContext context) {
     final nft = widget.nft;
 
-    final media = nft["mediaURI"] ?? nft["image"];
+    final media = resolvedImage ?? nft["mediaURI"] ?? nft["image"];
     final name = nft["name"] ?? "NFT";
     final desc = nft["description"] ?? "Không có mô tả";
+
     final seller = nft["seller"];
 
     final priceWei = nft["priceWei"] is BigInt
@@ -126,6 +142,7 @@ class _NFTDetailPageState extends State<NFTDetailPage> {
 
             const Spacer(),
 
+            /// BUY BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

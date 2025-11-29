@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:nft_app/src/services/contract_service.dart';
+import 'package:nft_app/src/services/ipfs_helper.dart';
+import 'package:nft_app/src/screens/products/nft_detail_page.dart';
 
 class MarketPage extends StatefulWidget {
-  const MarketPage({super.key});
+  final String currentAddress;
+
+  const MarketPage({super.key, required this.currentAddress});
 
   @override
   State<MarketPage> createState() => _MarketPageState();
@@ -11,37 +16,56 @@ class _MarketPageState extends State<MarketPage> {
   bool loading = true;
   bool error = false;
 
-  // Mock data để thiết kế giao diện – sau này thay bằng fetchAllNFTsForSale()
-  List<Map<String, dynamic>> items = [
-    {
-      "name": "Cyber Dog",
-      "price": "0.015",
-      "image":
-          "https://i.seadn.io/gae/2Jp_7Xc5v5uPUJg7YH4jPzZJMmRCxH8V4ySEH4xQDl4P4w?w=500&auto=format",
-    },
-    {
-      "name": "Pixel Warrior",
-      "price": "0.030",
-      "image":
-          "https://i.seadn.io/gae/1H5TpyvYYQcbmF3bE-R9f7DmqH6ybT9Eo2jjCddMjuvKc?w=500&auto=format",
-    },
-    {
-      "name": "Neon Girl",
-      "price": "0.022",
-      "image":
-          "https://i.seadn.io/gae/oeuN9E9Tj2yMwG3G2s1Y7lZ3Ru7k8_QfIs79y1uZB6MjE?w=500&auto=format",
-    },
-  ];
+  List<Map<String, dynamic>> items = [];
 
   @override
   void initState() {
     super.initState();
-    _loadMockData();
+    _loadMarket();
   }
 
-  Future<void> _loadMockData() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    setState(() => loading = false);
+  Future<void> _loadMarket() async {
+    try {
+      setState(() => loading = true);
+
+      final result = await ContractService().fetchAllNFTsForSale();
+
+      // Resolve IPFS images automatically
+      for (var i = 0; i < result.length; i++) {
+        final media = result[i]["mediaURI"] ?? result[i]["image"];
+        if (media != null) {
+          final resolved = await IpfsHelper.resolve(media);
+          result[i]["resolvedImage"] = resolved;
+        } else {
+          result[i]["resolvedImage"] = null;
+        }
+      }
+
+      setState(() {
+        items = result;
+        loading = false;
+      });
+    } catch (e) {
+      debugPrint("[MarketPage] Load error: $e");
+
+      setState(() {
+        error = true;
+        loading = false;
+      });
+    }
+  }
+
+  String _formatEth(dynamic wei) {
+    try {
+      if (wei is BigInt) {
+        return (wei.toDouble() / 1e18).toStringAsFixed(4);
+      }
+      if (wei is String) {
+        final p = BigInt.tryParse(wei);
+        if (p != null) return (p.toDouble() / 1e18).toStringAsFixed(4);
+      }
+    } catch (_) {}
+    return "0";
   }
 
   @override
@@ -68,11 +92,11 @@ class _MarketPageState extends State<MarketPage> {
                 children: [
                   const Text(
                     "Không tải được dữ liệu!",
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
-                    onPressed: _loadMockData,
+                    onPressed: _loadMarket,
                     child: const Text("Thử lại"),
                   ),
                 ],
@@ -82,21 +106,21 @@ class _MarketPageState extends State<MarketPage> {
           ? const Center(
               child: Text(
                 "Chưa có NFT nào được rao bán",
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: Colors.white),
               ),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              itemBuilder: (_, i) {
-                final nft = items[i];
-                return _buildNFTCard(nft);
-              },
+              itemBuilder: (_, i) => _buildNFTCard(items[i]),
             ),
     );
   }
 
   Widget _buildNFTCard(Map<String, dynamic> nft) {
+    final img = nft["resolvedImage"] ?? nft["mediaURI"] ?? nft["image"];
+    final price = _formatEth(nft["priceWei"]);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
@@ -108,7 +132,17 @@ class _MarketPageState extends State<MarketPage> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NFTDetailPage(
+                nft: nft,
+                currentAddress: widget.currentAddress,
+              ),
+            ),
+          );
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -118,7 +152,7 @@ class _MarketPageState extends State<MarketPage> {
                 top: Radius.circular(16),
               ),
               child: Image.network(
-                nft["image"],
+                img ?? "",
                 height: 220,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -142,7 +176,7 @@ class _MarketPageState extends State<MarketPage> {
                 children: [
                   // NFT NAME
                   Text(
-                    nft["name"],
+                    nft["name"] ?? "No Name",
                     style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w700,
@@ -152,12 +186,11 @@ class _MarketPageState extends State<MarketPage> {
 
                   const SizedBox(height: 6),
 
-                  // PRICE
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "${nft["price"]} ETH",
+                        "$price ETH",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.blueAccent,
@@ -177,14 +210,18 @@ class _MarketPageState extends State<MarketPage> {
                           ),
                         ),
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Tính năng mua sẽ được triển khai"),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NFTDetailPage(
+                                nft: nft,
+                                currentAddress: widget.currentAddress,
+                              ),
                             ),
                           );
                         },
                         child: const Text(
-                          "Mua ngay",
+                          "Xem ngay",
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
